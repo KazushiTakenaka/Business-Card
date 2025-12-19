@@ -6,22 +6,19 @@ Reads business card data from Google Sheets and creates a markdown file
 import os
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-
-SERVICE_ACCOUNT_FILE = r'C:\Users\taman\.gemini\tk-service-account-key.json'
-SPREADSHEET_ID = '1lN-ClkkRDO9wdcv8IPWXrRTcHjaQC5kiFC3mHxi2jWA'
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+import config
 
 def read_spreadsheet():
     """Googleスプレッドシートから名刺情報を読み取る"""
     creds = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        config.SERVICE_ACCOUNT_FILE, scopes=config.SCOPES_SHEETS_READONLY)
 
     service = build('sheets', 'v4', credentials=creds)
 
     # スプレッドシートのデータを取得
     sheet = service.spreadsheets()
     result = sheet.values().get(
-        spreadsheetId=SPREADSHEET_ID,
+        spreadsheetId=config.SPREADSHEET_ID,
         range='A:Z'  # 全カラムを取得
     ).execute()
 
@@ -36,9 +33,9 @@ def create_claude_md(data):
 
     with open('CLAUDE.md', 'w', encoding='utf-8') as f:
         f.write("# 名刺データベース\n\n")
-        f.write("このファイルは、Google Driveの名刺フォルダ（1eS10Nev-HfnisoY-sPEvephLBQ2h37Lu）内の\n")
+        f.write(f"このファイルは、Google Driveの名刺フォルダ（{config.DRIVE_FOLDER_ID}）内の\n")
         f.write("PDFファイルから読み取った名刺情報をまとめたものです。\n\n")
-        f.write("データソース: [名刺リストスプレッドシート](https://docs.google.com/spreadsheets/d/1lN-ClkkRDO9wdcv8IPWXrRTcHjaQC5kiFC3mHxi2jWA)\n\n")
+        f.write(f"データソース: [名刺リストスプレッドシート](https://docs.google.com/spreadsheets/d/{config.SPREADSHEET_ID})\n\n")
 
         # ヘッダー行を取得
         if len(data) > 0:

@@ -6,19 +6,17 @@ Filters and displays only PDF files from the business card folder
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-SERVICE_ACCOUNT_FILE = r'C:\Users\taman\.gemini\tk-service-account-key.json'
-PARENT_FOLDER_ID = '1eS10Nev-HfnisoY-sPEvephLBQ2h37Lu'
-SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
+import config
 
 def main():
     """PDFファイルのみをリストアップ"""
     creds = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        config.SERVICE_ACCOUNT_FILE, scopes=config.SCOPES_DRIVE_METADATA)
 
     service = build('drive', 'v3', credentials=creds)
 
     # PDFファイルのみを検索
-    query = f"'{PARENT_FOLDER_ID}' in parents and mimeType='application/pdf' and trashed = false"
+    query = f"'{config.DRIVE_FOLDER_ID}' in parents and mimeType='application/pdf' and trashed = false"
 
     results = service.files().list(
         q=query,
