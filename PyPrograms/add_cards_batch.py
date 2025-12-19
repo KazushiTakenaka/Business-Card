@@ -6,7 +6,31 @@ JSONファイルから名刺データを読み込み、スプレッドシート�
 2. このスクリプトを実行してJSONファイルを指定
 3. スプレッドシートに一括追加
 
-JSONファイル形式:
+JSONファイル形式（2つの形式をサポート）:
+
+形式1: オブジェクトの配列（推奨）
+[
+  {
+    "filename": "スキャン_20251217-0754.pdf",
+    "氏名(漢字)": "山田 太郎",
+    "氏名(ローマ字)": "Yamada Taro",
+    "会社名": "株式会社サンプル",
+    "役職": "部長",
+    "メールアドレス": "yamada@example.com",
+    "携帯電話": "090-1234-5678",
+    "固定電話": "03-1234-5678",
+    "FAX": "03-1234-5679",
+    "郵便番号": "100-0001",
+    "住所": "東京都千代田区...",
+    "ウェブサイト": "https://example.com",
+    "LINE ID": "",
+    "その他SNS": "",
+    "備考": ""
+  },
+  ...
+]
+
+形式2: 従来形式（後方互換性のため）
 {
   "source_pdf": "スキャン_20251217-0754.pdf",
   "cards": [
@@ -20,6 +44,7 @@ import sys
 import os
 import json
 import argparse
+import re
 from datetime import datetime
 
 # プロジェクトルートをパスに追加
@@ -41,28 +66,82 @@ def load_cards_from_json(json_file_path):
     with open(json_file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    source_pdf = data.get('source_pdf', '')
-    cards = data.get('cards', [])
+    # データ形式を判定
+    if isinstance(data, list):
+        # 新形式: オブジェクトの配列
+        # [{"filename": "...", "氏名(漢字)": "...", ...}, ...]
+        source_pdf = "一括登録"
+        cards = []
 
-    # 各カードにスキャンファイル名と読み取り日を追加
-    processed_cards = []
-    current_date = datetime.now().strftime("%Y-%m-%d")
+        for item in data:
+            # ファイル名から日付を抽出 (例: "スキャン_20250803-0909-2.pdf" → "2025-08-03")
+            filename = item.get('filename', '')
+            match = re.search(r'_(\d{8})-', filename)
+            if match:
+                date_str = match.group(1)  # "20250803"
+                scan_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"  # "2025-08-03"
+            else:
+                # フォールバック: ファイル名から日付を抽出できない場合は現在の日付を使用
+                scan_date = datetime.now().strftime("%Y-%m-%d")
 
-    for card in cards:
-        # カードデータが14列の場合、スキャンファイル名と読み取り日を追加
-        if len(card) == 14:
-            card.append(source_pdf)
-            card.append(current_date)
-        # 16列の場合はそのまま使用
-        elif len(card) == 16:
-            pass
+            # 各項目を配列に変換（スプレッドシートの列順に合わせる）
+            card = [
+                item.get('氏名(漢字)', ''),
+                item.get('氏名(ローマ字)', ''),
+                item.get('会社名', ''),
+                item.get('役職', ''),
+                item.get('メールアドレス', ''),
+                item.get('携帯電話', ''),
+                item.get('固定電話', ''),
+                item.get('FAX', ''),
+                item.get('郵便番号', ''),
+                item.get('住所', ''),
+                item.get('ウェブサイト', ''),
+                item.get('LINE ID', ''),
+                item.get('その他SNS', ''),
+                item.get('備考', ''),
+                filename,  # スキャンファイル名
+                scan_date  # 読み取り日（ファイル名から抽出）
+            ]
+            cards.append(card)
+
+        return source_pdf, cards
+
+    elif isinstance(data, dict):
+        # 旧形式: {"source_pdf": "...", "cards": [[...], [...]]}
+        source_pdf = data.get('source_pdf', '')
+        cards = data.get('cards', [])
+
+        # 各カードにスキャンファイル名と読み取り日を追加
+        processed_cards = []
+
+        # ファイル名から日付を抽出 (例: "スキャン_20250803-0909-2.pdf" → "2025-08-03")
+        match = re.search(r'_(\d{8})-', source_pdf)
+        if match:
+            date_str = match.group(1)  # "20250803"
+            current_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"  # "2025-08-03"
         else:
-            print(f"警告: カードデータの列数が不正です（{len(card)}列）。スキップします。")
-            continue
+            # フォールバック: ファイル名から日付を抽出できない場合は現在の日付を使用
+            current_date = datetime.now().strftime("%Y-%m-%d")
 
-        processed_cards.append(card)
+        for card in cards:
+            # カードデータが14列の場合、スキャンファイル名と読み取り日を追加
+            if len(card) == 14:
+                card.append(source_pdf)
+                card.append(current_date)
+            # 16列の場合はそのまま使用
+            elif len(card) == 16:
+                pass
+            else:
+                print(f"警告: カードデータの列数が不正です（{len(card)}列）。スキップします。")
+                continue
 
-    return source_pdf, processed_cards
+            processed_cards.append(card)
+
+        return source_pdf, processed_cards
+
+    else:
+        raise ValueError("JSONファイルの形式が不正です。リストまたはオブジェクトである必要があります。")
 
 def add_cards_to_sheet(cards, source_pdf=""):
     """

@@ -247,10 +247,17 @@ PDFから名刺情報を抽出してスプレッドシートに登録する完�
 ```bash
 .venv\Scripts\activate
 python PyPrograms/main.py
-# メニューで「5」を選択してPDF準備
-# Claude Codeに「temp_pdfs/内の全PDFから名刺情報を抽出してスプレッドシートに追加」と依頼
-# メニューで「6」を選択してクリーンアップ
+# ステップ1: メニューで「5」を選択してPDF準備
+# ステップ2: Claude Codeに「temp_pdfs/内の全PDFから名刺情報を抽出して、extracted_business_cards.jsonに保存してください」と依頼
+# ステップ3: メニューで「7」を選択してJSONをスプレッドシートに追加
+# ステップ4: メニューで「6」を選択してクリーンアップ
 ```
+
+**重要な仕様:**
+- JSONファイル名は常に`extracted_business_cards.json`（固定）
+- JSON形式は配列形式（`[{...}, {...}]`）を推奨
+- ファイル名から読み取り日を自動抽出（例: `スキャン_20250803-0909-2.pdf` → `2025-08-03`）
+- クリーンアップ時に`extracted_business_cards.json`も自動削除
 
 ### Regenerating CLAUDE.md from Spreadsheet
 

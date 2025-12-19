@@ -19,6 +19,7 @@ from PyPrograms.utils import list_files_in_folder, download_file, move_file_to_f
 
 PROCESSING_DATA_FILE = 'processing_data.json'
 TEMP_PDF_DIR = 'temp_pdfs'
+EXTRACTED_JSON_FILE = 'extracted_business_cards.json'
 
 def prepare_pdfs():
     """
@@ -88,12 +89,14 @@ def prepare_pdfs():
     print("\n次のステップ:")
     print("1. Claude Codeに以下のように依頼してください:")
     print(f"   「{TEMP_PDF_DIR}/内の全PDFから名刺情報を抽出して、")
-    print("    JSONファイルに保存してください」")
+    print(f"    {EXTRACTED_JSON_FILE}に保存してください」")
     print("\n2. JSONファイルをスプレッドシートに追加:")
     print("   python PyPrograms/main.py")
     print("   # メニューで「7」を選択")
+    print(f"   または: python PyPrograms/add_cards_batch.py {EXTRACTED_JSON_FILE}")
     print("\n3. 処理完了後、以下のコマンドでクリーンアップを実行:")
     print(f"   python PyPrograms/extract_and_upload_to_sheet.py --cleanup")
+    print(f"   または: python PyPrograms/main.py でメニュー「6」を選択")
     print(f"{'=' * 60}\n")
 
 def cleanup_processed_files():
@@ -160,6 +163,11 @@ def cleanup_processed_files():
     if os.path.exists(PROCESSING_DATA_FILE):
         os.remove(PROCESSING_DATA_FILE)
         print(f"メタデータファイルを削除: {PROCESSING_DATA_FILE}")
+
+    # 抽出済みJSONファイルを削除
+    if os.path.exists(EXTRACTED_JSON_FILE):
+        os.remove(EXTRACTED_JSON_FILE)
+        print(f"抽出済みJSONファイルを削除: {EXTRACTED_JSON_FILE}")
 
     print(f"\n{'=' * 60}")
     print("クリーンアップ完了！")
