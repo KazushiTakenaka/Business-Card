@@ -22,10 +22,10 @@
 
 ```bash
 # 仮想環境を有効化
-.venv\Scripts\activate
+.\.venv\Scripts\activate.ps1
 
 # メインプログラムを起動
-python PyPrograms/main.py
+python .\PyPrograms\main.py
 ```
 
 ### ステップ2: PDF処理準備
@@ -62,24 +62,30 @@ Google DriveからPDFファイルリストを取得中...
 次のステップ:
 1. Claude Codeに以下のように依頼してください:
    「temp_pdfs/内の全PDFから名刺情報を抽出して、
-    スプレッドシートに追加してください」
+    JSONファイルに保存してください」
 
-2. 処理完了後、以下のコマンドでクリーンアップを実行:
+2. JSONファイルをスプレッドシートに追加:
+   python PyPrograms/main.py
+   # メニューで「7」を選択
+
+3. 処理完了後、以下のコマンドでクリーンアップを実行:
    python PyPrograms/extract_and_upload_to_sheet.py --cleanup
 ```
 
 ### ステップ3: PDFから名刺情報を抽出
 
+#### 方法A: Claude Codeに直接依頼（従来の方法）
+
 Claude Codeに以下のように依頼します：
 
 ```
 temp_pdfs/内の全PDFから名刺情報を抽出して、
-スプレッドシートに追加してください
+JSONファイルに保存してください
 ```
 
 **Claude Codeの処理:**
 1. `temp_pdfs/`ディレクトリ内の各PDFファイルを読み取り
-2. PDFに含まれる名刺情報を解析
+2. PDFに含まれる名刺情報を解析（複数枚の名刺が含まれる場合も対応）
 3. 以下の情報を抽出：
    - 氏名（漢字）
    - 氏名（ローマ字）
@@ -95,9 +101,67 @@ temp_pdfs/内の全PDFから名刺情報を抽出して、
    - LINE ID
    - その他SNS
    - 備考
-   - スキャンファイル名
-   - 読み取り日
-4. Googleスプレッドシート（ID: `1lN-ClkkRDO9wdcv8IPWXrRTcHjaQC5kiFC3mHxi2jWA`）に各行を追加
+4. JSONファイル形式で保存
+
+**JSONファイル例:**
+```json
+{
+  "source_pdf": "スキャン_20251217-0754.pdf",
+  "cards": [
+    ["山田太郎", "Taro Yamada", "株式会社サンプル", "代表取締役", "yamada@example.com", "090-1234-5678", "03-1234-5678", "03-1234-5679", "100-0001", "東京都千代田区千代田1-1-1", "https://example.com", "", "", "備考"],
+    ["佐藤花子", "Hanako Sato", "サンプル株式会社", ...]
+  ]
+}
+```
+
+#### 方法B: JSONファイルから一括追加（推奨）
+
+抽出したJSONファイルをスプレッドシートに追加します：
+
+**メニューから実行:**
+```bash
+python PyPrograms/main.py
+# メニューで「7」を選択
+# JSONファイルのパスを入力
+```
+
+**またはコマンドラインから:**
+```bash
+python PyPrograms/add_cards_batch.py cards.json
+```
+
+**処理内容:**
+- JSONファイルから名刺データを読み込み
+- スキャンファイル名と読み取り日を自動追加
+- Googleスプレッドシート（ID: `1lN-ClkkRDO9wdcv8IPWXrRTcHjaQC5kiFC3mHxi2jWA`）に各行を追加
+- エラーが発生した名刺のみを表示（再試行可能）
+
+**出力例:**
+```
+============================================================
+名刺データ一括追加
+============================================================
+
+読み込み元PDF: スキャン_20251217-0754.pdf
+名刺データ数: 11件
+
+スプレッドシートに追加しますか？ (y/n): y
+
+[1/11] 追加完了: 濱崎 浩司 (株式会社アーストレックロボティクス)
+[2/11] 追加完了: 吉田周司 (delight design)
+[3/11] 追加完了: 溝口 聡志 (Gallery Goro)
+...
+
+============================================================
+処理完了: 成功 11件, エラー 0件
+============================================================
+```
+
+**方法Bの利点:**
+- 複数枚の名刺が含まれるPDFに対応
+- エラーハンドリングと再試行が容易
+- JSONファイルを保存すれば、後から再実行可能
+- 処理状況が明確に表示される
 
 ### ステップ4: クリーンアップ
 
@@ -228,14 +292,20 @@ python PyPrograms/extract_and_upload_to_sheet.py --cleanup
 2. **処理時間**: PDFファイル数が多い場合、処理に時間がかかります
 3. **API制限**: Google APIの使用制限に注意してください
 4. **重複チェック**: 同じPDFを複数回処理しないように注意してください
+5. **複数枚名刺**: 1つのPDFに複数枚の名刺が含まれる場合があります。JSONファイル形式を使用することで、すべての名刺を確実に追加できます
+6. **JSONファイルの保存**: 抽出したJSONファイルは保存しておくことをお勧めします。エラーが発生した場合に再実行できます
 
 ## 関連ファイル
 
-- `PyPrograms/extract_and_upload_to_sheet.py` - メインスクリプト
+- `PyPrograms/extract_and_upload_to_sheet.py` - PDF準備とクリーンアップスクリプト
+- `PyPrograms/add_cards_batch.py` - JSONファイルから名刺を一括追加するスクリプト
 - `PyPrograms/utils.py` - ユーティリティ関数
 - `PyPrograms/config.py` - 設定ファイル
 - `PyPrograms/main.py` - メニューインターフェース
+- `PyPrograms/card_data_template.json` - JSONテンプレートファイル
+- `PyPrograms/example_cards.json` - JSON形式の例
 
 ## 更新履歴
 
 - 2025-12-19: 初版作成
+- 2025-12-19: JSONファイルを使った一括追加方法を追加、複数枚名刺対応

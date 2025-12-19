@@ -21,14 +21,15 @@ def show_menu():
     print("  4. PDFファイルをダウンロード")
     print("  5. PDF処理準備（名刺情報抽出用にダウンロード）")
     print("  6. 処理済みPDFのクリーンアップ")
-    print("  7. 終了")
+    print("  7. JSONファイルから名刺を一括追加")
+    print("  8. 終了")
     print("\n" + "="*60)
 
 def main():
     """メイン処理"""
     while True:
         show_menu()
-        choice = input("\n操作を選択してください (1-7): ").strip()
+        choice = input("\n操作を選択してください (1-8): ").strip()
 
         if choice == '1':
             print("\n[Google Driveフォルダの内容をリスト中...]")
@@ -61,14 +62,19 @@ def main():
             extract_and_upload_to_sheet.cleanup_processed_files()
 
         elif choice == '7':
+            print("\n[JSONファイルから名刺を一括追加]")
+            import add_cards_batch
+            add_cards_batch.main()
+
+        elif choice == '8':
             print("\n終了します。")
             break
 
         else:
-            print("\n無効な選択です。1-7の数字を入力してください。")
+            print("\n無効な選択です。1-8の数字を入力してください。")
 
         # 続行確認
-        if choice in ['1', '2', '3', '4', '5', '6']:
+        if choice in ['1', '2', '3', '4', '5', '6', '7']:
             input("\nEnterキーを押してメニューに戻る...")
 
 if __name__ == '__main__':

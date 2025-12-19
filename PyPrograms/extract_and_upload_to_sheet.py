@@ -88,8 +88,11 @@ def prepare_pdfs():
     print("\n次のステップ:")
     print("1. Claude Codeに以下のように依頼してください:")
     print(f"   「{TEMP_PDF_DIR}/内の全PDFから名刺情報を抽出して、")
-    print("    スプレッドシートに追加してください」")
-    print("\n2. 処理完了後、以下のコマンドでクリーンアップを実行:")
+    print("    JSONファイルに保存してください」")
+    print("\n2. JSONファイルをスプレッドシートに追加:")
+    print("   python PyPrograms/main.py")
+    print("   # メニューで「7」を選択")
+    print("\n3. 処理完了後、以下のコマンドでクリーンアップを実行:")
     print(f"   python PyPrograms/extract_and_upload_to_sheet.py --cleanup")
     print(f"{'=' * 60}\n")
 
